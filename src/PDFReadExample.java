@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,24 +9,37 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
 
-/**
- * This class is used to read an existing
- * pdf file using iText jar.
- *
- * @author javawithease
- */
-public class PDFReadExample {
-    public static void main(String args[]) {
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
-        LinkedHashMap<String, String> infos = new LinkedHashMap<>();
+
+public class PDFReadExample {
+    public static void main(String args[]) throws IOException {
+
+        pegarInfos();
+        renameFile();
+
+    }
+    public static String dir = "C:\\Users\\CALL1\\Desktop\\doc\\";
+   public static String abrirDocumento() {
+        int x = 1;
+        String path = dir + "comprovante (" + x + ").pdf";
+
+        return path;
+    }
+
+
+    public static String pegarInfos() {
         StringBuilder sb = new StringBuilder("");
+
         String valor = "";
         String nomeDestinatario = "";
         String dataPagamento = "";
         try {
             //Create PdfReader instance.
-            PDDocument document = PDDocument.load(new File("C:\\Users\\CALL1\\Desktop\\doc\\comprovante (1).pdf"));
-
+            PDDocument document = PDDocument.load(new File(abrirDocumento()));
             String text = "";
             if (!document.isEncrypted()) {
                 PDFTextStripper stripper = new PDFTextStripper();
@@ -41,7 +55,7 @@ public class PDFReadExample {
 
 
                 if (prefixo.equals("Data do Pagamento")) {
-                    dataPagamento = fields[1];
+                    dataPagamento = fields[1].replace("/", ".");
                 }
                 if (prefixo.equals("Nome Destinatário")) {
                     nomeDestinatario = fields[1];
@@ -55,13 +69,27 @@ public class PDFReadExample {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("Comprovante "
+        return "CP "
                 + dataPagamento
                 + " - "
                 + nomeDestinatario
-                + " "
-                + valor);
-
+                + "  R$ "
+                + valor
+                + ".pdf";
     }
 
+    public static void renameFile() throws IOException {
+        String nomeAntigo = "C:\\Users\\CALL1\\Desktop\\doc\\comprovante.pdf";
+        String nomeNovo = dir + pegarInfos();
+
+        Path pathAntigo = Paths.get(nomeAntigo);
+        Path pathNovo = Paths.get(nomeNovo);
+
+        try {
+            Files.move(pathAntigo, pathNovo, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("Arquivo renomeado com sucesso.");
+        } catch (Exception e) {
+            System.out.println("Falha ao renomear o arquivo: " + e.getMessage());
+        }
+    }
 }
