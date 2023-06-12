@@ -1,50 +1,87 @@
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
+import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.pdfbox.text.PDFTextStripperByArea;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-
 
 public class PDFReadExample {
-    public static void main(String args[]) throws IOException {
-
-        pegarInfos();
-        renameFile();
-
-    }
-    public static String dir = "C:\\Users\\CALL1\\Desktop\\doc\\";
-   public static String abrirDocumento() {
-        int x = 1;
-        String path = dir + "comprovante (" + x + ").pdf";
-
-        return path;
+    public static void main(String args[]) {
+        renameFiles();
     }
 
+    public static String directory = "C:\\Users\\CALL1\\Desktop\\doc\\";
 
-    public static String pegarInfos() {
+    public static void renameFiles() {
+        String pasta = directory;
+        String novoNome = "comprovante";
+
+        File diretorio = new File(pasta);
+        File[] arquivos = diretorio.listFiles();
+
+        if (arquivos != null) {
+            for (int i = 0; i < arquivos.length; i++) {
+                File arquivo = arquivos[i];
+                if (arquivo.isFile()) {
+                    String novoNomeArquivo = novoNome + " " + i + ".pdf";
+                    File novoArquivo = new File(arquivo.getParent(), novoNomeArquivo);
+                    boolean renomeadoComSucesso = arquivo.renameTo(novoArquivo);
+
+                    if (renomeadoComSucesso) {
+                        String nomeComInfos = directory + novoNomeArquivo;
+                        try {
+                            Integer filetype = fileType(novoArquivo.getPath());
+                            String novoNomeFinal = "";
+                            if (filetype == 1) {
+                                novoNomeFinal = pegarInfosTipo1(nomeComInfos);
+                            }
+                            else {
+                                novoNomeFinal = pegarInfosTipo2(nomeComInfos);
+                            }
+                            File arquivoFinal = new File(directory, novoNomeFinal);
+                            novoArquivo.renameTo(arquivoFinal);
+                            System.out.println("Arquivo " + novoNomeArquivo + " renomeado com sucesso para " + novoNomeFinal);
+                        } catch (Exception e) {
+                            System.out.println("Algo deu errado" + novoNomeArquivo + ": " + e.getMessage());
+                        }
+                    } else {
+                        System.out.println("Falha ao renomear o arquivo " + arquivo.getName());
+                    }
+                }
+            }
+        }
+    }
+
+    private static String fileText(String path) throws IOException {
+        try (PDDocument document = PDDocument.load(new File(path))) {
+            if (!document.isEncrypted()) {
+                PDFTextStripper stripper = new PDFTextStripper();
+                return stripper.getText(document);
+            }
+            document.close();
+            return null;
+        }
+    }
+    private static Integer fileType(String path) throws IOException {
+        String text = fileText(path);
+        if (text.length() > 0 && Character.isDigit(text.charAt(0))) {
+            return 2;
+        } else {
+            return 1;
+        }
+    }
+
+    public static String pegarInfosTipo1(String caminhoArquivo) throws IOException {
         StringBuilder sb = new StringBuilder("");
-
         String valor = "";
         String nomeDestinatario = "";
         String dataPagamento = "";
         try {
-            //Create PdfReader instance.
-            PDDocument document = PDDocument.load(new File(abrirDocumento()));
-            String text = "";
-            if (!document.isEncrypted()) {
-                PDFTextStripper stripper = new PDFTextStripper();
-                text = stripper.getText(document);
-            }
+            PDDocument document = PDDocument.load(new File(caminhoArquivo));
+            PDFTextStripper stripper = new PDFTextStripper();
+            String text = stripper.getText(document);
+            document.close();
             sb.append(text);
             String[] linhas = sb.toString().split("\\r?\\n");
 
@@ -53,43 +90,64 @@ public class PDFReadExample {
                 String[] fields = data1.split(": ");
                 String prefixo = fields[0];
 
-
                 if (prefixo.equals("Data do Pagamento")) {
                     dataPagamento = fields[1].replace("/", ".");
+                    //System.out.println(dataPagamento);
                 }
                 if (prefixo.equals("Nome Destinatário")) {
                     nomeDestinatario = fields[1];
+                    //System.out.println(nomeDestinatario);
                 }
                 if (prefixo.equals("Valor Total (R$)")) {
                     valor = fields[1];
+                    //System.out.println(valor);
                 }
             }
-
-            document.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new IOException("Falha ao extrair informações do arquivo: " + e.getMessage());
         }
-        return "CP "
-                + dataPagamento
-                + " - "
-                + nomeDestinatario
-                + "  R$ "
-                + valor
-                + ".pdf";
+
+        return "CP " + dataPagamento + " - " + nomeDestinatario + " R$ " + valor + ".pdf";
     }
 
-    public static void renameFile() throws IOException {
-        String nomeAntigo = "C:\\Users\\CALL1\\Desktop\\doc\\comprovante.pdf";
-        String nomeNovo = dir + pegarInfos();
+    public static String pegarInfosTipo2(String caminhoArquivo) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        List<String> lines = new ArrayList<>();
+        sb.append(fileText(caminhoArquivo));
+        String[] linhas = sb.toString().split("\\r?\\n");
 
-        Path pathAntigo = Paths.get(nomeAntigo);
-        Path pathNovo = Paths.get(nomeNovo);
+        String valor = "";
+        String nomeDestinatario = "";
+        String dataPagamento = "";
 
-        try {
-            Files.move(pathAntigo, pathNovo, StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Arquivo renomeado com sucesso.");
-        } catch (Exception e) {
-            System.out.println("Falha ao renomear o arquivo: " + e.getMessage());
+        for (String linha : linhas) {
+            if (!linha.trim().isEmpty()) {
+                lines.add(linha);
+            }
         }
+
+        for (String line : lines) {
+            if (line.contains("Valor Pago (R$):")) {
+                int index = line.indexOf("Valor Pago (R$):");
+                valor = line.substring(0, index).trim();
+
+            } else if (line.contains("Data do Pagamento:") || line.contains("Data da Transação:")) {
+                if (line.contains("Data do Pagamento:")) {
+                    dataPagamento = line.substring(0, line.indexOf("Data do Pagamento"));
+                } else if (line.contains("Data da Transação:")) {
+                    dataPagamento = line.substring(0, line.indexOf("Data da Transação"));
+                }
+
+            } else if (line.contains("Razão Social do Beneficiário:") || line.contains("Favorecido:")) {
+                int index = 0;
+                if (line.contains("Razão Social do Beneficiário:")) {
+                    dataPagamento = line.substring(0, line.indexOf("Razão Social do Beneficiário:"));
+                } else if (line.contains("Favorecido:")) {
+                    dataPagamento = line.substring(0, line.indexOf("Favorecido"));
+                }
+                nomeDestinatario = line.substring(0, index).trim();
+            }
+        }
+        return "CP " + dataPagamento + " - " + nomeDestinatario + " R$ " + valor + ".pdf";
     }
 }
