@@ -119,6 +119,7 @@ public class PDFReadExample {
         String valor = "";
         String nomeDestinatario = "";
         String dataPagamento = "";
+        String numeroDocumento = "";
 
         for (String linha : linhas) {
             if (!linha.trim().isEmpty()) {
@@ -126,12 +127,15 @@ public class PDFReadExample {
             }
         }
         for (String line : lines) {
-            if (line.contains("Valor Pago (R$):") || line.contains("Valor (R$):")) {
+            if (line.contains("Valor Pago (R$):") || line.contains("Valor (R$):") || line.contains("Valor Total (R$):")) {
                 if (line.contains("Valor Pago (R$):")) {
                     int index = line.indexOf("Valor Pago (R$):");
                     valor = line.substring(0, index).trim();
                 } else if (line.contains("Valor (R$):")) {
                     int index = line.indexOf("Valor (R$):");
+                    valor = line.substring(0, index).trim();
+                } else {
+                    int index = line.indexOf("Valor Total (R$):");
                     valor = line.substring(0, index).trim();
                 }
 
@@ -153,6 +157,13 @@ public class PDFReadExample {
                     System.out.println(nomeDestinatario);
                 }
             }
+            else if (line.contains("Número do Documento:")) {
+                numeroDocumento = line.substring(0, line.indexOf("Número do Documento:"));
+            }
+
+        }
+        if (numeroDocumento != "") {
+            return "Darf R$ " + valor + " - "  + numeroDocumento+ ".pdf";
         }
         return dataPagamento + " R$ " + valor + " " + nomeDestinatario + ".pdf";
     }
