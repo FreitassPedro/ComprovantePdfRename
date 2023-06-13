@@ -35,8 +35,7 @@ public class PDFReadExample {
                             String novoNomeFinal = "";
                             if (filetype == 1) {
                                 novoNomeFinal = pegarInfosTipo1(nomeComInfos);
-                            }
-                            else {
+                            } else {
                                 novoNomeFinal = pegarInfosTipo2(nomeComInfos);
                             }
                             File arquivoFinal = new File(directory, novoNomeFinal);
@@ -63,9 +62,10 @@ public class PDFReadExample {
             return null;
         }
     }
+
     private static Integer fileType(String path) throws IOException {
         String text = fileText(path);
-        if (text.length() > 0 && Character.isDigit(text.charAt(0))) {
+        if (text.length() > 0 && !text.startsWith("Ass")) {
             return 2;
         } else {
             return 1;
@@ -90,24 +90,24 @@ public class PDFReadExample {
                 String[] fields = data1.split(": ");
                 String prefixo = fields[0];
 
-                if (prefixo.equals("Data do Pagamento")) {
+                if (prefixo.equals("Data do Pagamento") || prefixo.equals("Data da Transação")) {
                     dataPagamento = fields[1].replace("/", ".");
                     //System.out.println(dataPagamento);
                 }
-                if (prefixo.equals("Nome Destinatário")) {
+                if (prefixo.equals("Nome Destinatário") || prefixo.equals("Razão Social do Beneficiário")) {
                     nomeDestinatario = fields[1];
                     //System.out.println(nomeDestinatario);
                 }
-                if (prefixo.equals("Valor Total (R$)")) {
+                if (prefixo.equals("Valor Total (R$)") || prefixo.equals("Valor Pago (R$):")) {
                     valor = fields[1];
-                    //System.out.println(valor);
                 }
             }
+
         } catch (IOException e) {
             throw new IOException("Falha ao extrair informações do arquivo: " + e.getMessage());
         }
 
-        return "CP " + dataPagamento + " - " + nomeDestinatario + " R$ " + valor + ".pdf";
+        return dataPagamento + " R$ " + valor + " " + nomeDestinatario + ".pdf";
     }
 
     public static String pegarInfosTipo2(String caminhoArquivo) throws IOException {
@@ -125,11 +125,15 @@ public class PDFReadExample {
                 lines.add(linha);
             }
         }
-
         for (String line : lines) {
-            if (line.contains("Valor Pago (R$):")) {
-                int index = line.indexOf("Valor Pago (R$):");
-                valor = line.substring(0, index).trim();
+            if (line.contains("Valor Pago (R$):") || line.contains("Valor (R$):")) {
+                if (line.contains("Valor Pago (R$):")) {
+                    int index = line.indexOf("Valor Pago (R$):");
+                    valor = line.substring(0, index).trim();
+                } else if (line.contains("Valor (R$):")) {
+                    int index = line.indexOf("Valor (R$):");
+                    valor = line.substring(0, index).trim();
+                }
 
             } else if (line.contains("Data do Pagamento:") || line.contains("Data da Transação:")) {
                 if (line.contains("Data do Pagamento:")) {
@@ -137,17 +141,19 @@ public class PDFReadExample {
                 } else if (line.contains("Data da Transação:")) {
                     dataPagamento = line.substring(0, line.indexOf("Data da Transação"));
                 }
+                dataPagamento = dataPagamento.replace("/", ".");
+
 
             } else if (line.contains("Razão Social do Beneficiário:") || line.contains("Favorecido:")) {
                 int index = 0;
                 if (line.contains("Razão Social do Beneficiário:")) {
-                    dataPagamento = line.substring(0, line.indexOf("Razão Social do Beneficiário:"));
+                    nomeDestinatario = line.substring(0, line.indexOf("Razão Social do Beneficiário:"));
                 } else if (line.contains("Favorecido:")) {
-                    dataPagamento = line.substring(0, line.indexOf("Favorecido"));
+                    nomeDestinatario = line.substring(0, line.indexOf("Favorecido"));
+                    System.out.println(nomeDestinatario);
                 }
-                nomeDestinatario = line.substring(0, index).trim();
             }
         }
-        return "CP " + dataPagamento + " - " + nomeDestinatario + " R$ " + valor + ".pdf";
+        return dataPagamento + " R$ " + valor + " " + nomeDestinatario + ".pdf";
     }
 }
