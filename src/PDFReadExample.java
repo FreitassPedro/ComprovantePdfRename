@@ -8,14 +8,15 @@ import org.apache.pdfbox.text.PDFTextStripper;
 
 
 public class PDFReadExample {
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         renameFiles();
     }
 
     //DIRETÓRIO PADRÃO A SER USADO DURANTE EXECUÇÃO
-    public static String directory = "C:\\Users\\CALL1\\Desktop\\doqui\\";
+    public static String directory = "C:\\Users\\CALL1\\Desktop\\doc\\";
     //NOME TEMPORARIO PARA NOVO ARQUIVO
     public static String novoNome = "comprovante";
+
     //RENOMEIA ARQUIVOS PARA NOME FINAL/TEMPORARIOS
     public static void renameFiles() {
         File diretorio = new File(directory);
@@ -43,7 +44,7 @@ public class PDFReadExample {
                         String nomeComInfos = directory + novoNomeArquivo;
                         try {
                             Integer fileType = fileType(novoArquivo.getPath());
-                            String novoNomeFinal = "";
+                            String novoNomeFinal;
                             if (fileType == 1) {
                                 novoNomeFinal = pegarInfosTipo1(nomeComInfos);
                             } else {
@@ -62,6 +63,7 @@ public class PDFReadExample {
             }
         }
     }
+
     //TRANSFORMA O PDF EM TEXT E ARMAZENA NA STRING
     private static String fileText(String path) throws IOException {
         try (PDDocument document = PDDocument.load(new File(path))) {
@@ -73,6 +75,7 @@ public class PDFReadExample {
             return null;
         }
     }
+
     //APARTIR DO FILETEXT, COLETA QUAL O TIPO DO COMPROVANTE, POSSUINDO APENAS 2 TIPOS
     private static Integer fileType(String path) throws IOException {
         String text = fileText(path);
@@ -82,50 +85,57 @@ public class PDFReadExample {
             return 1;
         }
     }
+
     //EXTRAI AS INFORMAÇÕES SE FOR O TIPO 1
     public static String pegarInfosTipo1(String caminhoArquivo) throws IOException {
-        StringBuilder sb = new StringBuilder("");
+        List<String> lines = new ArrayList<>();
+        String[] linhas = fileText(caminhoArquivo).split("\\r?\\n");
+
         String valor = "";
         String nomeDestinatario = "";
         String dataPagamento = "";
-        try {
-            PDDocument document = PDDocument.load(new File(caminhoArquivo));
-            PDFTextStripper stripper = new PDFTextStripper();
-            String text = stripper.getText(document);//;;/
-            document.close();
-            sb.append(text);
-            String[] linhas = sb.toString().split("\\r?\\n");
 
-            for (int i = 6; i < linhas.length; i++) {
-                String data1 = linhas[i];
-                String[] fields = data1.split(": ");
-                String prefixo = fields[0];
+        for (String linha : linhas) {
+            if (!linha.trim().isEmpty()) {
+                lines.add(linha);
+            }
+        }
+        String[] chavesDatas = {"Data do Pagamento", "Data da Transação"};
+        String[] chavesPagamentos = {"Nome Destinatário", "Razão Social do Beneficiário", "Favorecido"};
+        String[] chavesValores = {"Valor Total (R$)", "Valor Pago (R$)"};
 
-                if (prefixo.equals("Data do Pagamento") || prefixo.equals("Data da Transação")) {
+        for (String line : lines) {
+            String[] fields = line.split(": ");
+            String prefixo = fields[0];
+
+            for (String chave : chavesDatas) {
+                if (prefixo.equals(chave)) {
                     dataPagamento = fields[1].replace("/", ".");
-                    //System.out.println(dataPagamento);
-                }
-                if (prefixo.equals("Nome Destinatário") || prefixo.equals("Razão Social do Beneficiário") || prefixo.equals("Favorecido")) {
-                    nomeDestinatario = fields[1];
-                    //System.out.println(nomeDestinatario);
-                }
-                if (prefixo.equals("Valor Total (R$)") || prefixo.equals("Valor Pago (R$)")) {
-                    valor = fields[1];
+                    break;
                 }
             }
-
-        } catch (IOException e) {
-            throw new IOException("Falha ao extrair informações do arquivo: " + e.getMessage());
+            for (String chave : chavesPagamentos) {
+                if (prefixo.equals(chave)) {
+                    nomeDestinatario = fields[1];
+                    break;
+                }
+            }
+            for (String chave : chavesValores) {
+                if (prefixo.equals(chave)) {
+                    valor = fields[1];
+                    break;
+                }
+            }
         }
 
         return dataPagamento + " R$ " + valor + " " + nomeDestinatario + ".pdf";
     }
-    //EXTRAI AS INFORMAÇÕES SE FOR O TIPO 1
+
+
+    //EXTRAI AS INFORMAÇÕES SE FOR O TIPO 2
     public static String pegarInfosTipo2(String caminhoArquivo) throws IOException {
-        StringBuilder sb = new StringBuilder();
         List<String> lines = new ArrayList<>();
-        sb.append(fileText(caminhoArquivo));
-        String[] linhas = sb.toString().split("\\r?\\n");
+        String[] linhas = fileText(caminhoArquivo).split("\\r?\\n");
 
         String valor = "";
         String nomeDestinatario = "";
@@ -137,48 +147,49 @@ public class PDFReadExample {
                 lines.add(linha);
             }
         }
+        String[] chavesPagmentos = {"Valor Pago (R$):", "Valor (R$):", "Valor Total (R$):", "Valor Transferido (R$):", "Valor a Transferir (R$):"};
+        String[] chavesDatas = {"Data do Pagamento:", "Data da Transação:", "Data Transferência:"};
+        String[] chavesNomes = {"Razão Social do Beneficiário:", "Favorecido:", "Empresa"};
+        String[] chavesNomesAlt = {"Motivo Transferência", "Descrição do Pagamento"};
         for (String line : lines) {
-            if (line.contains("Valor Pago (R$):") || line.contains("Valor (R$):") || line.contains("Valor Total (R$):") || line.contains("Valor Transferido (R$):")) {
-                if (line.contains("Valor Pago (R$):")) {
-                    int index = line.indexOf("Valor Pago (R$):");
+            for (String chave : chavesPagmentos) {
+                if (line.contains(chave)) {
+                    int index = line.indexOf(chave);
                     valor = line.substring(0, index).trim();
-                } else if (line.contains("Valor (R$):")) {
-                    int index = line.indexOf("Valor (R$):");
-                    valor = line.substring(0, index).trim();
-                } else if (line.contains("Valor Transferido (R$):")) {
-                    int index = line.indexOf("Valor Transferido (R$):");
-                    valor = line.substring(0, index).trim();
-                } else {
-                    int index = line.indexOf("Valor Total (R$):");
-                    valor = line.substring(0, index).trim();
+                    break;
                 }
+            }
 
-            } else if (line.contains("Data do Pagamento:") || line.contains("Data da Transação:") || line.contains("Data Transferência:")) {
-                if (line.contains("Data do Pagamento:")) {
-                    dataPagamento = line.substring(0, line.indexOf("Data do Pagamento"));
-                } else if (line.contains("Data da Transação:")) {
-                    dataPagamento = line.substring(0, line.indexOf("Data da Transação"));
-                } else if (line.contains("Data Transferência:")) {
-                    dataPagamento = line.substring(0, line.indexOf("Data Transferência"));
+            for (String chave : chavesDatas) {
+                if (line.contains(chave)) {
+                    dataPagamento = line.substring(0, line.indexOf(chave));
                 }
                 dataPagamento = dataPagamento.replace("/", ".");
 
-
-            } else if (line.contains("Razão Social do Beneficiário:") || line.contains("Favorecido:")) {
-                int index = 0;
-                if (line.contains("Razão Social do Beneficiário:")) {
-                    nomeDestinatario = line.substring(0, line.indexOf("Razão Social do Beneficiário:"));
-                } else if (line.contains("Favorecido:")) {
-                    nomeDestinatario = line.substring(0, line.indexOf("Favorecido"));
-                    System.out.println(nomeDestinatario);
-                }
-            } else if (line.contains("Número do Documento:")) {
-                numeroDocumento = line.substring(0, line.indexOf("Número do Documento:"));
             }
 
+
+            for (String chave : chavesNomes) {
+                for (String chaveAlt : chavesNomesAlt) {
+                    if (lines.contains(chave)) {
+                        nomeDestinatario = line.substring(0, line.indexOf(chave));
+                        break;
+
+                    }
+                    if (line.contains(chaveAlt)) {
+                        nomeDestinatario = line.substring(0, line.indexOf(chaveAlt));
+                        break;
+                    }
+                }
+
+                if (line.contains("Número do Documento:")) {
+                    numeroDocumento = line.substring(0, line.indexOf("Número do Documento:"));
+                    break;
+                }
+            }
         }
-        if (numeroDocumento != "") {
-            return dataPagamento + " R$ " + valor + " - DARF" + numeroDocumento + ".pdf";
+        if (numeroDocumento.equals("")) {
+            return dataPagamento + " R$ " + valor + " - DARF " + numeroDocumento + ".pdf";
         }
         return dataPagamento + " R$ " + valor + " " + nomeDestinatario + ".pdf";
     }
