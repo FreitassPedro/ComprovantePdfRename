@@ -13,7 +13,7 @@ public class PDFReadExample {
     }
 
     //DIRETÓRIO PADRÃO A SER USADO DURANTE EXECUÇÃO
-    public static String directory = "C:\\Users\\CALL1\\Desktop\\doc\\";
+    public static String directory = "C:\\Users\\CALL1\\Desktop\\doqui\\";
     //NOME TEMPORARIO PARA NOVO ARQUIVO
     public static String novoNome = "comprovante";
 
@@ -94,6 +94,7 @@ public class PDFReadExample {
         String valor = "";
         String nomeDestinatario = "";
         String dataPagamento = "";
+        String nomeDestinatarioAlt = "";
 
         for (String linha : linhas) {
             if (!linha.trim().isEmpty()) {
@@ -103,6 +104,7 @@ public class PDFReadExample {
         String[] chavesDatas = {"Data do Pagamento", "Data da Transação"};
         String[] chavesPagamentos = {"Nome Destinatário", "Razão Social do Beneficiário", "Favorecido"};
         String[] chavesValores = {"Valor Total (R$)", "Valor Pago (R$)"};
+        String[] chavesPagamentosAlt = {"Motivo Transferência", "Descrição de Pagamento"};
 
         for (String line : lines) {
             String[] fields = line.split(": ");
@@ -115,9 +117,17 @@ public class PDFReadExample {
                 }
             }
             for (String chave : chavesPagamentos) {
-                if (prefixo.equals(chave)) {
-                    nomeDestinatario = fields[1];
-                    break;
+                for (String chaveAlt : chavesPagamentosAlt) {
+                    if (prefixo.equals(chave)) {
+                        nomeDestinatario = fields[1];
+                        break;
+                    }
+                    if (prefixo.equals(chaveAlt)) {
+                        nomeDestinatarioAlt = fields[1];
+                    }
+                }
+                if (nomeDestinatario.equals("")) {
+                    nomeDestinatario = nomeDestinatario;
                 }
             }
             for (String chave : chavesValores) {
@@ -127,7 +137,6 @@ public class PDFReadExample {
                 }
             }
         }
-
         return dataPagamento + " R$ " + valor + " " + nomeDestinatario + ".pdf";
     }
 
@@ -139,6 +148,7 @@ public class PDFReadExample {
 
         String valor = "";
         String nomeDestinatario = "";
+        String nomeDestinatarioAlt = "";
         String dataPagamento = "";
         String numeroDocumento = "";
 
@@ -147,12 +157,12 @@ public class PDFReadExample {
                 lines.add(linha);
             }
         }
-        String[] chavesPagmentos = {"Valor Pago (R$):", "Valor (R$):", "Valor Total (R$):", "Valor Transferido (R$):", "Valor a Transferir (R$):"};
+        String[] chavesPagamentos = {"Valor Pago (R$):", "Valor (R$):", "Valor Total (R$):", "Valor Transferido (R$):", "Valor a Transferir (R$):"};
         String[] chavesDatas = {"Data do Pagamento:", "Data da Transação:", "Data Transferência:"};
-        String[] chavesNomes = {"Razão Social do Beneficiário:", "Favorecido:", "Empresa"};
-        String[] chavesNomesAlt = {"Motivo Transferência", "Descrição do Pagamento"};
+        String[] chavesNomes = {"Razão Social do Beneficiário:", "Favorecido", "Empresa"};
+        String[] chavesNomesAlt = {"Motivo Transferência", "Descrição de Pagamento"};
         for (String line : lines) {
-            for (String chave : chavesPagmentos) {
+            for (String chave : chavesPagamentos) {
                 if (line.contains(chave)) {
                     int index = line.indexOf(chave);
                     valor = line.substring(0, index).trim();
@@ -168,27 +178,28 @@ public class PDFReadExample {
 
             }
 
-
+            //CORRIGIR ESTA LINHA DE CÓDIGO, A DESCRIÇÃO ESTA PUXANDO ANTES
             for (String chave : chavesNomes) {
                 for (String chaveAlt : chavesNomesAlt) {
-                    if (lines.contains(chave)) {
+                    if (line.contains(chave)) {
                         nomeDestinatario = line.substring(0, line.indexOf(chave));
                         break;
-
                     }
                     if (line.contains(chaveAlt)) {
-                        nomeDestinatario = line.substring(0, line.indexOf(chaveAlt));
-                        break;
+                        nomeDestinatarioAlt = line.substring(0, line.indexOf(chaveAlt));
                     }
                 }
+
 
                 if (line.contains("Número do Documento:")) {
                     numeroDocumento = line.substring(0, line.indexOf("Número do Documento:"));
-                    break;
                 }
             }
+            if (nomeDestinatario.equals("")) {
+                nomeDestinatario = nomeDestinatarioAlt;
+            }
         }
-        if (numeroDocumento.equals("")) {
+        if (!numeroDocumento.equals("")) {
             return dataPagamento + " R$ " + valor + " - DARF " + numeroDocumento + ".pdf";
         }
         return dataPagamento + " R$ " + valor + " " + nomeDestinatario + ".pdf";
