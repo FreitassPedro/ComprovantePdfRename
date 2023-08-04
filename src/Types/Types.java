@@ -88,16 +88,14 @@ public class Types {
                     break;
                 }
             }
-
             for (String chave : chavesDatas) {
                 if (line.contains(chave)) {
                     dataPagamento = line.substring(0, line.indexOf(chave));
+                    dataPagamento = dataPagamento.replace("/", ".");
+                    break;
                 }
-                dataPagamento = dataPagamento.replace("/", ".");
-
             }
 
-            //CORRIGIR ESTA LINHA DE CÓDIGO, A DESCRIÇÃO ESTA PUXANDO ANTES
             for (String chave : chavesNomes) {
                 for (String chaveAlt : chavesNomesAlt) {
                     if (line.contains(chave)) {
@@ -108,8 +106,6 @@ public class Types {
                         nomeDestinatarioAlt = line.substring(0, line.indexOf(chaveAlt));
                     }
                 }
-
-
                 if (line.contains("Número do Documento:")) {
                     numeroDocumento = line.substring(0, line.indexOf("Número do Documento:"));
                 }
@@ -129,35 +125,40 @@ public class Types {
         List<String> lines = new ArrayList<>();
         String[] linhas = fileInfos.fileText(caminhoArquivo).split("\\r?\\n");
         String valor = "";
-        String nomeDestinatario = "";
+        String nomeDestinatarioFinal = "";
         String dataPagamento = "";
-        String destinatarioRemetemente = "";
-        String[] chavesNomes = {"Nome do destinatário", "Nome do pagador:"};
+
+        String nomePagadorPara = "Nome do pagador:";
+        String nomeDestinatarioDe = "Nome do destinatário:";
+
         String[] chavesDatas = {"Realizado em:"};
         String[] chavesPagamentos = {"Valor:"};
 
-        boolean remetDest = false;
+        boolean ehPagamento = false;
+        String deOuPara = "de";
         for (String linha : linhas) {
             if (!linha.trim().isEmpty()) {
                 lines.add(linha);
             }
         }
         for (String line : lines) {
-            if (line.contains("Pagamento") && !remetDest) {
-                destinatarioRemetemente = "para";
+            if (line.contains("Comprovante de Pagamento PIX")) {
+                deOuPara = "para";
+                ehPagamento = true;
             }
-            else {
-                destinatarioRemetemente = "de";
+
+            //SE FOR PAGAMENTO, SALVAR DESTINATARIO
+            //SE FOR RECEBIMENTO, SALVAR PAGADOR
+            if(line.contains(nomePagadorPara) && !ehPagamento) {
+                String[] fields = line.split(":");
+                nomeDestinatarioFinal = fields[1];
+                continue;
+            } else if (line.contains(nomeDestinatarioDe) && ehPagamento) {
+                String[] fields = line.split(":");
+                nomeDestinatarioFinal = fields[1];
             }
-            remetDest = true;
-            for (String chave : chavesNomes) {
-                    if (line.contains(chave)) {
-                        String[] nomeDestinatarioTemp = line.split(":");
-                        nomeDestinatario = nomeDestinatarioTemp[1];
-                        break;
-                    }
-            }
-            for(String chave : chavesDatas) {
+
+            for (String chave : chavesDatas) {
                 if (line.contains(chave)) {
                     String[] dataPagamentoSplit = line.split(": ");
                     dataPagamentoSplit = dataPagamentoSplit[1].split("-");
@@ -165,13 +166,14 @@ public class Types {
                     dataPagamento = dataPagamento.replace("/", ".");
                 }
             }
-            for(String chave : chavesPagamentos) {
+            for (String chave : chavesPagamentos) {
                 if (line.contains(chave)) {
                     String[] valores = line.split(": ");
                     valor = valores[1];
+                    break;
                 }
             }
         }
-        return dataPagamento + valor + " PIX " + destinatarioRemetemente + nomeDestinatario + ".pdf";
+        return dataPagamento + valor + " PIX " + deOuPara + nomeDestinatarioFinal.toUpperCase() + ".pdf";
     }
 }

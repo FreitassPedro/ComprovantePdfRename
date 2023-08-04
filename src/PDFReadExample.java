@@ -14,22 +14,30 @@ import static Types.Types.*;
 
 public class PDFReadExample {
     public static void main(String[] args) {
+        mensagemBoasVindas();
         renameFiles();
     }
 
     //DIRETÓRIO PADRÃO A SER USADO DURANTE EXECUÇÃO
     public static String directory() {
         String username = System.getProperty("user.name");
-        return "C:\\Users\\" + username + "\\Desktop\\doc\\";
+        return "C:\\Users\\" + username + "\\Desktop\\pix\\";
     }
     //NOME TEMPORARIO PARA NOVO ARQUIVO
-    public static String novoNome = "comprovante";
-
+    private static final String novoNome = "comprovante";
+    private static void mensagemBoasVindas() {
+        System.out.println("Siga as intruções:");
+        System.out.println("""
+                Para começar, coloque todos arquivos de comprovante PDF na pasta PIX na área de trabalho!
+                Se não tiver, basta apenas criar!
+                Vamos começar!
+                """);
+    }
     //RENOMEIA ARQUIVOS PARA NOME FINAL/TEMPORARIOS
     public static void renameFiles() {
         File diretorio = new File(directory());
         File[] arquivos = diretorio.listFiles();
-
+        int contadorComprovante = 0;
         if (arquivos != null) {
             for (int i = 0; i < arquivos.length; i++) {
                 File arquivo = arquivos[i];
@@ -53,7 +61,7 @@ public class PDFReadExample {
                         String nomeComInfos = directory() + novoNomeArquivo;
                         String novoNomeFinal = "";
                         try {
-                            Integer fileType = fileInfos.fileType(novoArquivo.getPath());
+                            int fileType = fileInfos.fileType(novoArquivo.getPath());
                             if (fileType == 1) {
                                 novoNomeFinal = pegarInfosTipo1(nomeComInfos);
                             } else if (fileType == 2) {
@@ -63,8 +71,9 @@ public class PDFReadExample {
                                 novoNomeFinal = pegarInfosTipo3(nomeComInfos);
                             }
                             File arquivoFinal = new File(directory(), novoNomeFinal);
-                            novoArquivo.renameTo(arquivoFinal);
                             System.out.println("Arquivo " + novoNomeArquivo + " renomeado com sucesso para " + novoNomeFinal);
+                            novoArquivo.renameTo(arquivoFinal);
+                            contadorComprovante++;
                         } catch (Exception e) {
                             System.out.println("Algo deu errado" + novoNomeArquivo + ": " + e.getMessage());
                         }
@@ -74,5 +83,7 @@ public class PDFReadExample {
                 }
             }
         }
+        System.out.println();
+        System.out.println(contadorComprovante + " Comprovantes foram renomeados! Operação concluída.");
     }
 }
