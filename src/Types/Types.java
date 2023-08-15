@@ -20,43 +20,43 @@ public class Types {
                 lines.add(linha);
             }
         }
-        String[] chavesDatas = {"Data do Pagamento", "Data da Transação"};
-        String[] chavesPagamentos = {"Nome Destinatário", "Razão Social do Beneficiário", "Favorecido"};
-        String[] chavesValores = {"Valor Total (R$)", "Valor Pago (R$)"};
-        String[] chavesPagamentosAlt = {"Motivo Transferência", "Descrição de Pagamento"};
+        String[] chavesDatas = {"Data do Pagamento:", "Data da Transação:"};
+        String[] chavesPagamentos = {"Nome Destinatário:", "Razão Social do Beneficiário:", "Favorecido:", "Empresa:"};
+        String[] chavesValores = {"Valor Total (R$):", "Valor Pago (R$):"};
+        String[] chavesPagamentosAlt = {"Motivo Transferência:", "Descrição de Pagamento:", "Descrição do Pagamento:", "Tipo de Documento:"};
+        while (dataPagamento.equals("") && valor.equals("") && nomeDestinatario.equals("")) {
+            for (String line : lines) {
+                String[] fields = line.split(": ");
+                String prefixo = fields[0] + ":";
 
-        for (String line : lines) {
-            String[] fields = line.split(": ");
-            String prefixo = fields[0];
-
-            for (String chave : chavesDatas) {
-                if (prefixo.equals(chave)) {
-                    dataPagamento = fields[1].replace("/", ".");
-                    break;
-                }
-            }
-            for (String chave : chavesPagamentos) {
-                for (String chaveAlt : chavesPagamentosAlt) {
+                for (String chave : chavesDatas) {
                     if (prefixo.equals(chave)) {
-                        nomeDestinatario = fields[1];
+                        dataPagamento = fields[1].replace("/", ".");
                         break;
                     }
-                    if (prefixo.equals(chaveAlt)) {
-                        nomeDestinatarioAlt = fields[1];
+                }
+                for (String chave : chavesPagamentos) {
+                    for (String chaveAlt : chavesPagamentosAlt) {
+                        if (prefixo.equals(chave)) {
+                            nomeDestinatario = fields[1];
+                            break;
+                        }
+                        if (prefixo.equals(chaveAlt)) {
+                            nomeDestinatarioAlt = fields[1];
+                        }
+                    }
+                    if (nomeDestinatario.equals("")) {
+                        nomeDestinatario = nomeDestinatarioAlt;
                     }
                 }
-                if (nomeDestinatario.equals("")) {
-                    nomeDestinatario = nomeDestinatarioAlt;
-                }
-            }
-            for (String chave : chavesValores) {
-                if (prefixo.equals(chave)) {
-                    valor = fields[1];
-                    break;
+                for (String chave : chavesValores) {
+                    if (prefixo.equals(chave)) {
+                        valor = fields[1];
+                        break;
+                    }
                 }
             }
         }
-
         return dataPagamento + " R$ " + valor + " " + nomeDestinatario + ".pdf";
     }
 
@@ -78,44 +78,47 @@ public class Types {
         }
         String[] chavesPagamentos = {"Valor Pago (R$):", "Valor (R$):", "Valor Total (R$):", "Valor Transferido (R$):", "Valor a Transferir (R$):"};
         String[] chavesDatas = {"Data do Pagamento:", "Data da Transação:", "Data Transferência:"};
-        String[] chavesNomes = {"Razão Social do Beneficiário:", "Favorecido", "Empresa"};
-        String[] chavesNomesAlt = {"Motivo Transferência", "Descrição de Pagamento"};
-        for (String line : lines) {
-            for (String chave : chavesPagamentos) {
-                if (line.contains(chave)) {
-                    int index = line.indexOf(chave);
-                    valor = line.substring(0, index).trim();
-                    break;
-                }
-            }
-            for (String chave : chavesDatas) {
-                if (line.contains(chave)) {
-                    dataPagamento = line.substring(0, line.indexOf(chave));
-                    dataPagamento = dataPagamento.replace("/", ".");
-                    break;
-                }
-            }
-
-            for (String chave : chavesNomes) {
-                for (String chaveAlt : chavesNomesAlt) {
+        String[] chavesNomes = {"Razão Social do Beneficiário:", "Favorecido:", "Empresa:"};
+        String[] chavesNomesAlt = {"Motivo Transferência:", "Descrição de Pagamento:", "Descrição do Pagamento:"};
+        while (dataPagamento.equals("") && valor.equals("") && nomeDestinatario.equals("")) {
+            for (String line : lines) {
+                for (String chave : chavesPagamentos) {
                     if (line.contains(chave)) {
-                        nomeDestinatario = line.substring(0, line.indexOf(chave));
+                        int index = line.indexOf(chave);
+                        valor = line.substring(0, index).trim();
                         break;
                     }
-                    if (line.contains(chaveAlt)) {
-                        nomeDestinatarioAlt = line.substring(0, line.indexOf(chaveAlt));
+                }
+                for (String chave : chavesDatas) {
+                    if (line.contains(chave)) {
+                        dataPagamento = line.substring(0, line.indexOf(chave));
+                        dataPagamento = dataPagamento.replace("/", ".");
+                        break;
                     }
                 }
-                if (line.contains("Número do Documento:")) {
-                    numeroDocumento = line.substring(0, line.indexOf("Número do Documento:"));
+
+                for (String chave : chavesNomes) {
+                    for (String chaveAlt : chavesNomesAlt) {
+                        if (line.contains(chave)) {
+                            nomeDestinatario = line.substring(0, line.indexOf(chave));
+                            break;
+                        }
+                        if (line.contains(chaveAlt)) {
+                            nomeDestinatarioAlt = line.substring(0, line.indexOf(chaveAlt));
+                            break;
+                        }
+                    }
+                    if (line.contains("Número do Documento:")) {
+                        numeroDocumento = line.substring(0, line.indexOf("Número do Documento:"));
+                    }
+                }
+                if (nomeDestinatario.equals("")) {
+                    nomeDestinatario = nomeDestinatarioAlt;
                 }
             }
-            if (nomeDestinatario.equals("")) {
-                nomeDestinatario = nomeDestinatarioAlt;
+            if (!numeroDocumento.equals("")) {
+                return dataPagamento + " R$ " + valor + " - DARF " + numeroDocumento + ".pdf";
             }
-        }
-        if (!numeroDocumento.equals("")) {
-            return dataPagamento + " R$ " + valor + " - DARF " + numeroDocumento + ".pdf";
         }
         return dataPagamento + " R$ " + valor + " " + nomeDestinatario + ".pdf";
     }
@@ -141,36 +144,38 @@ public class Types {
                 lines.add(linha);
             }
         }
-        for (String line : lines) {
-            if (line.contains("Comprovante de Pagamento PIX")) {
-                deOuPara = "para";
-                ehPagamento = true;
-            }
-
-            //SE FOR PAGAMENTO, SALVAR DESTINATARIO
-            //SE FOR RECEBIMENTO, SALVAR PAGADOR
-            if(line.contains(nomePagadorPara) && !ehPagamento) {
-                String[] fields = line.split(":");
-                nomeDestinatarioFinal = fields[1];
-                continue;
-            } else if (line.contains(nomeDestinatarioDe) && ehPagamento) {
-                String[] fields = line.split(":");
-                nomeDestinatarioFinal = fields[1];
-            }
-
-            for (String chave : chavesDatas) {
-                if (line.contains(chave)) {
-                    String[] dataPagamentoSplit = line.split(": ");
-                    dataPagamentoSplit = dataPagamentoSplit[1].split("-");
-                    dataPagamento = dataPagamentoSplit[0];
-                    dataPagamento = dataPagamento.replace("/", ".");
+        while (dataPagamento.equals("") && valor.equals("") && nomeDestinatarioFinal.equals("")) {
+            for (String line : lines) {
+                if (line.contains("Comprovante de Pagamento PIX")) {
+                    deOuPara = "para";
+                    ehPagamento = true;
                 }
-            }
-            for (String chave : chavesPagamentos) {
-                if (line.contains(chave)) {
-                    String[] valores = line.split(": ");
-                    valor = valores[1];
-                    break;
+
+                //SE FOR PAGAMENTO, SALVAR DESTINATARIO
+                //SE FOR RECEBIMENTO, SALVAR PAGADOR
+                if (line.contains(nomePagadorPara) && !ehPagamento) {
+                    String[] fields = line.split(":");
+                    nomeDestinatarioFinal = fields[1];
+                    continue;
+                } else if (line.contains(nomeDestinatarioDe) && ehPagamento) {
+                    String[] fields = line.split(":");
+                    nomeDestinatarioFinal = fields[1];
+                }
+
+                for (String chave : chavesDatas) {
+                    if (line.contains(chave)) {
+                        String[] dataPagamentoSplit = line.split(": ");
+                        dataPagamentoSplit = dataPagamentoSplit[1].split("-");
+                        dataPagamento = dataPagamentoSplit[0];
+                        dataPagamento = dataPagamento.replace("/", ".");
+                    }
+                }
+                for (String chave : chavesPagamentos) {
+                    if (line.contains(chave)) {
+                        String[] valores = line.split(": ");
+                        valor = valores[1];
+                        break;
+                    }
                 }
             }
         }
