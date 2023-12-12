@@ -57,7 +57,7 @@ public class Types {
                 }
             }
         }
-        return dataPagamento + " R$ " + valor + " " + nomeDestinatario + ".pdf";
+        return dataPagamento + " R$ " + valor + " - " + nomeDestinatario.toUpperCase().trim();
     }
 
     //EXTRAI AS INFORMAÇÕES SE FOR O TIPO 2
@@ -120,7 +120,7 @@ public class Types {
                 return dataPagamento + " R$ " + valor + " - DARF " + numeroDocumento + ".pdf";
             }
         }
-        return dataPagamento + " R$ " + valor + " " + nomeDestinatario + ".pdf";
+        return dataPagamento + " R$ " + valor + " - " + nomeDestinatario.toUpperCase().trim();
     }
 
 
@@ -155,7 +155,7 @@ public class Types {
                 //SE FOR RECEBIMENTO, SALVAR PAGADOR
                 if (line.contains(nomePagadorPara) && !ehPagamento) {
                     String[] fields = line.split(":");
-                    nomeDestinatarioFinal = fields[1];
+                    nomeDestinatarioFinal = fields[1].trim();
                     continue;
                 } else if (line.contains(nomeDestinatarioDe) && ehPagamento) {
                     String[] fields = line.split(":");
@@ -179,6 +179,6 @@ public class Types {
                 }
             }
         }
-        return dataPagamento + valor + " PIX " + deOuPara + nomeDestinatarioFinal.toUpperCase() + ".pdf";
+        return dataPagamento + valor + " - " + nomeDestinatarioFinal.toUpperCase().trim();
     }
 }

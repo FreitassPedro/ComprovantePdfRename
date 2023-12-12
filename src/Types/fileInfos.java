@@ -11,7 +11,8 @@ import static Types.Types.*;
 public class fileInfos {
     public static String directory() {
         String username = System.getProperty("user.name");
-        return "C:\\Users\\" + username + "\\Desktop\\doc\\";
+        return "C:\\Users\\" + username + "\\Desktop\\docError\\teste\\";
+        // return "C:\\Users\\" + username + "\\Desktop\\projetoExcel\\comprovantes\\";
     }
     public static String fileText(String path) throws IOException {
         try (PDDocument document = PDDocument.load(new File(path))) {
@@ -27,6 +28,7 @@ public class fileInfos {
     //APARTIR DO FILETEXT, COLETA QUAL O TIPO DO COMPROVANTE, POSSUINDO APENAS 2 TIPOS
     public static Integer fileType(String path) throws IOException {
         String text = fileText(path);
+        assert text != null;
         if (text.startsWith("Ass")) {
             return 1;
         } else if (text.startsWith("Comprovante de Recebimento") || text.startsWith("Comprovante de Pagamento")) {
@@ -72,10 +74,23 @@ public class fileInfos {
                             else if (fileType == 3) {
                                 novoNomeFinal = pegarInfosTipo3(nomeComInfos);
                             }
-                            File arquivoFinal = new File(directory(), novoNomeFinal);
-                            System.out.println("Arquivo " + novoNomeArquivo + " renomeado com sucesso para " + novoNomeFinal);
-                            novoArquivo.renameTo(arquivoFinal);
-                            contadorComprovante++;
+
+                            /*Renomeia o arquivo com a String novoNomeFinal
+                            Falha caso já existir algum arquivo com o mesmo nome, então adiciona "(2)"
+                            */
+
+                            File arquivoFinal = new File(directory(), novoNomeFinal + ".pdf");
+
+                            if (arquivoFinal.exists()) {
+                                // Se o arquivo final já existe, adicione ' (2)' ao nome
+                                arquivoFinal = new File(directory(), novoNomeFinal + " (2).pdf");
+                            }
+                            if (novoArquivo.renameTo(arquivoFinal)) {
+                                System.out.println("Arquivo " + novoNomeArquivo + " renomeado com sucesso para " + novoNomeFinal);
+                                contadorComprovante++;
+                            } else {
+                                System.out.println("Erro ao renomear o arquivo " + novoNomeArquivo);
+                            }
                         } catch (Exception e) {
                             System.out.println("Algo deu errado" + novoNomeArquivo + ": " + e.getMessage());
                         }

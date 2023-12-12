@@ -6,19 +6,13 @@ Como forma de estudos
 Programa para renomear arquivos (comprovantes pdf) banco Sicredi
 ****************************************************************
  */
-
-
-import Types.fileInfos;
-import java.io.File;
-import static Types.Types.*;
-import static Types.fileInfos.fileType;
 import static Types.fileInfos.renameFiles;
 
 public class PDFReadExample {
     public static void main(String[] args) {
-        mensagemBoasVindas();
         renameFiles();
     }
+
     private static void mensagemBoasVindas() {
         System.out.println("Siga as intruções:");
         System.out.println("""
